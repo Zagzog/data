@@ -23,7 +23,7 @@ class IoDynamics(object):
         self.layer1 = information_layer
         self.layer2 = opinion_layer
         self.alpha = alpha_a
-        self.csn = central_extreme_number
+        self.cen = central_extreme_number
         self.fen = frontier_extreme_number
         self.ow = omega_w
         self.U = []
@@ -51,7 +51,7 @@ class IoDynamics(object):
             self.first_ten_opinion[nodes] = []
 
         # set extreme nodes
-        self.min_degree, self.max_degree = degree_node(self.layer2, self.fen, self.csn)
+        self.min_degree, self.max_degree = degree_node(self.layer2, self.fen, self.cen)
 
         for nd1 in list(random.sample(self.min_degree, self.csn)):
             self.stubborn_opponents.append(nd1)
