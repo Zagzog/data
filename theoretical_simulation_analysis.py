@@ -6,6 +6,7 @@ import networkx as nx
 from pandas import DataFrame
 
 
+# Renaming nodes for calculation
 def node_order(graph):
     G2 = graph
     ww = {}
@@ -211,13 +212,13 @@ def theory_frequency(ces, graph_name, layer1, layer2):
     g.close()
 
 
-# TCI calculation method
-def TCI(graph, opinion_dic):
+# TCI calculation method of first order
+def TCI_first(graph):
     neighbor_relationship = {}
     degree_nodes = {}
     node_list = []
 
-    for node in opinion_dic.keys():
+    for node in graph.nodes():
         neighbor_relationship[node] = []
         node_list.append(node)
     # store neighbor relationship
@@ -230,19 +231,88 @@ def TCI(graph, opinion_dic):
                 M += 1
                 mm += 1
         degree_nodes[node] = mm
+
+    return neighbor_relationship, degree_nodes, M
+
+
+# TCI calculation method of second order
+def TCI_second(graph):
+    neighbor_n_relationship = {}
+    degree_n_nodes = {}
+    node_list = []
+
+    for node in graph.nodes():
+        neighbor_n_relationship[node] = []
+        node_list.append(node)
+    # store neighbor relationship
+    M = 0
+    for node in node_list:
+        mm = 0
+        neighbor_state = {}
+        for node1 in node_list:
+            neighbor_state[node1] = 0
+
+        for neighbor in graph.neighbors(node):
+            for neighbor2 in graph.neighbors(neighbor):
+                if neighbor2 is not node and neighbor_state[neighbor2] == 0:
+                    neighbor_n_relationship[node].append(neighbor2)
+                    M += 1
+                    mm += 1
+                    neighbor_state[neighbor2] = 1
+
+        degree_n_nodes[node] = mm
+    return neighbor_n_relationship, degree_n_nodes, M
+
+
+# TCI calculation method of third order
+def TCI_third(graph):
+    neighbor_n_relationship = {}
+    degree_n_nodes = {}
+    node_list = []
+
+    for node in graph.nodes():
+        neighbor_n_relationship[node] = []
+        node_list.append(node)
+    # store neighbor relationship
+    M = 0
+    for node in node_list:
+        mm = 0
+        neighbor_state = {}
+        for node1 in node_list:
+            neighbor_state[node1] = 0
+
+        for neighbor in graph.neighbors(node):
+            for neighbor2 in graph.neighbors(neighbor):
+                for neighbor3 in graph.neighbors(neighbor2):
+                    if neighbor3 is not node and neighbor_state[neighbor3] == 0:
+                        neighbor_n_relationship[node].append(neighbor3)
+                        M += 1
+                        mm += 1
+                        neighbor_state[neighbor3] = 1
+        degree_n_nodes[node] = mm
+    return neighbor_n_relationship, degree_n_nodes, M
+
+
+# method of calculate TCI
+def TCI(opinion_dic, neighbor_n_relationship, degree_n_nodes, M):
     product_opinion1 = []
     product_opinion2 = []
+    node_list = []
+
+    for key in opinion_dic.keys():
+        node_list.append(key)
+
     for node1 in node_list:
         store_product_opinion1 = []
         store_product_opinion2 = []
         for node2 in node_list:
-            average_degree_double = degree_nodes[node1] * degree_nodes[node2] / M
-            if node2 in neighbor_relationship[node1]:
+            average_degree_double = degree_n_nodes[node1] * degree_n_nodes[node2] / M
+            if node2 in neighbor_n_relationship[node1]:
                 product_factor = 1 - average_degree_double
             else:
                 product_factor = 0 - average_degree_double
             if node2 == node1:
-                product_factor2 = degree_nodes[node1] - average_degree_double
+                product_factor2 = degree_n_nodes[node1] - average_degree_double
             else:
                 product_factor2 = 0 - average_degree_double
             opinion_double1 = product_factor * opinion_dic[node1] * opinion_dic[node2]
@@ -270,10 +340,25 @@ def TCI(graph, opinion_dic):
 
 
 # calculate TCI
-def calculate_TCI(graph_name, graph_matrix):
-    G1 = graph_matrix
-    tci_list = []
+def calculate_TCI(graph_name, graph_matrix1, graph_matrix2, type):
+    G1 = graph_matrix1
+    G2 = graph_matrix2
+    tci_list_1 = []
+    tci_list_2 = []
+    if type == 1:
+        neighbor_n_relationship1, degree_n_nodes1, M1 = TCI_first(G1)
+        neighbor_n_relationship2, degree_n_nodes2, M2 = TCI_first(G2)
+    elif type == 2:
+        neighbor_n_relationship1, degree_n_nodes1, M1 = TCI_second(G1)
+        neighbor_n_relationship2, degree_n_nodes2, M2 = TCI_second(G2)
+    elif type == 3:
+        neighbor_n_relationship1, degree_n_nodes1, M1 = TCI_third(G1)
+        neighbor_n_relationship2, degree_n_nodes2, M2 = TCI_third(G2)
+    else:
+        print("input 1, 2 or 3")
+        return
     for i in range(11):
+        print(i)
         path = graph_name + '/' + str(i) + '-central extreme supporter/'
         opinion_dic = {}
         opinion_list = []
@@ -285,10 +370,21 @@ def calculate_TCI(graph_name, graph_matrix):
             line1 = line.strip('\n').split(':')
             opinion_dic[line1[0]] = float(line1[1])
             opinion_list.append(float(line1[1]))
-        original_r = TCI(G1, opinion_dic)
-        tci_list.append(original_r)
-    f = open('E:/paper-data/model data/' + graph_name + '/TCI.txt', 'w')
-    for item in tci_list:
+        original_r = TCI(opinion_dic, neighbor_n_relationship1, degree_n_nodes1, M1)
+        tci_list_1.append(original_r)
+        print("ori_1", original_r)
+
+        original_r_2 = TCI(opinion_dic, neighbor_n_relationship2, degree_n_nodes2, M2)
+        tci_list_2.append(original_r_2)
+        print("ori_2", original_r_2)
+
+    f = open(graph_name + '/TCI_' + str(type) + '_1.txt', 'w')
+    for item in tci_list_1:
+        f.write(str(item) + '\n')
+    f.close()
+
+    f = open(graph_name + '/TCI_' + str(type) + '_2.txt', 'w')
+    for item in tci_list_2:
         f.write(str(item) + '\n')
     f.close()
 
@@ -315,36 +411,118 @@ def simulation_frequency(graph_name, ces):
     g.close()
 
 
-# calculate average result of population
-def limit_of_omega():
-    path = 'E:/paper-data/parameter_setting/Limited information dissemination/'
-    folder = os.path.exists(path + 'average result of population')
-    if not folder:
-        os.makedirs(path + 'average result of population')
-    for k in range(11):
-        name = '/' + str(k) + '-central extreme supporter/'
-        all_number = []
-        for z in range(1, 10):
-            number_2 = []
-            for j in range(20):
-                number = []
-                for i in range(100):
-                    path1 = 'w=' + str(z) + '/graph' + str(j) + name + '/number' + str(i)
-                    f = open(path + path1 + '/population of knowing news.txt', 'r')
-                    lines = f.readlines()
-                    f.close()
-                    num = []
-                    for item in lines:
-                        line = item.strip('\n')
-                        num.append(float(line))
-                    number.append(num[-1])
-                number_2.append(sum(number) / 100)
-            all_number.append(sum(number_2) / 20)
-        f = open(path + 'average result of population' + name + '.txt', 'w')
-        for nn in all_number:
-            f.write(str(nn) + '\n')
-        f.close()
+# calculate the ratio of edge overlap
+def edge_overlap():
+    graph_name = ['BA-BA', 'BA-ER', 'ER-BA', 'ER-ER', 'moscow', 'cannes']
+    graph_list1 = ['BA1_10000', 'BA1_10000', 'ER1_10000', 'ER1_10000', 'moscow_2', 'cannes_2']
+    graph_list2 = ['BA2_10000', 'ER2_10000', 'BA2_10000', 'ER2_10000', 'moscow_3', 'cannes_3']
 
+    for i in range(6):
+        lap = 0
+        M1 = 0
+        M2 = 0
+        G1 = nx.read_edgelist("F:/论文/network data/" + graph_list1[i])
+        G2 = nx.read_edgelist("F:/论文/network data/" + graph_list2[i])
+        edge1_dict = {}
+        for edge in G1.edges():
+            edge1_dict[edge] = 0
+            M1 += 1
+        for edge in G2.edges():
+            M2 += 1
+            if edge in edge1_dict:
+                lap += 1
+
+        print(graph_name[i], lap / (M1 + M2 - lap))
+
+
+# calculate the spread range results of different h
+def change_h_data_clean(path):
+    number_A = []
+    for i in range(100):
+        store_A = []
+        f = open(path + "/number" + str(i) + "/population of knowing news.txt", 'r')
+        lines = f.readlines()
+        f.close()
+        for line in lines:
+            item = line.strip('\n')
+            store_A.append(int(item))
+        if not number_A:
+            number_A = store_A
+        else:
+            l1 = len(number_A)
+            l2 = len(store_A)
+            if l1 > l2:
+                for j in range(l2, l1):
+                    store_A.append(store_A[-1])
+            elif l1 < l2:
+                for j in range(l1, l2):
+                    number_A.append(number_A[-1])
+            l = max(l1, l2)
+            for j in range(l):
+                number_A[j] += store_A[j]
+    f = open(path + '/number_A.txt', 'w')
+    for i in range(len(number_A)):
+        f.write(str(number_A[i] / 100) + '\n')
+    f.close()
+
+
+# calculate the opinion results of different h
+def simulation_frequency_h(graph_name, ces):
+    opinion_1 = [0 for i in range(20)]
+    rr = []
+    for i1 in range(-10, 11, 1):
+        rr.append(i1 / 10)
+    path = 'F:/paper-data/model-data-add/' + str(graph_name) + '/' + str(ces) + '-central extreme supporter'
+    f = open(path + '/simulation data/average_opinion.txt', 'r')
+    lines1 = f.readlines()
+    f.close()
+    for item in lines1:
+        line1 = item.strip('\n').split(':')
+        for i2 in range(20):
+            if rr[i2] <= float(line1[1]) <= rr[i2 + 1]:
+                opinion_1[i2] += 1
+                break
+
+    folder = os.path.exists(path + '/analysis results/')
+    if not folder:
+        os.makedirs(path + '/analysis results/')
+
+    g = open(path + '/analysis results/simulation_frequency.txt', 'w')
+    for opinion in opinion_1:
+        g.write(str(opinion) + '\n')
+    g.close()
+
+
+# # calculate average result of population
+# def limit_of_omega():
+#     path = 'E:/paper-data/parameter_setting/Limited information dissemination/'
+#     folder = os.path.exists(path + 'average result of population')
+#     if not folder:
+#         os.makedirs(path + 'average result of population')
+#     for k in range(11):
+#         name = '/' + str(k) + '-central extreme supporter/'
+#         all_number = []
+#         for z in range(1, 10):
+#             number_2 = []
+#             for j in range(20):
+#                 number = []
+#                 for i in range(100):
+#                     path1 = 'w=' + str(z) + '/graph' + str(j) + name + '/number' + str(i)
+#                     f = open(path + path1 + '/population of knowing news.txt', 'r')
+#                     lines = f.readlines()
+#                     f.close()
+#                     num = []
+#                     for item in lines:
+#                         line = item.strip('\n')
+#                         num.append(float(line))
+#                     number.append(num[-1])
+#                 number_2.append(sum(number) / 100)
+#             all_number.append(sum(number_2) / 20)
+#         f = open(path + 'average result of population' + name + '.txt', 'w')
+#         for nn in all_number:
+#             f.write(str(nn) + '\n')
+#         f.close()
+#
 
 # network view
 def edge_select(ces, graph_matrix, graph_name):
@@ -481,7 +659,15 @@ def edge_select(ces, graph_matrix, graph_name):
 if __name__ == '__main__':
     c = [i for i in range(11)]
     graph_list = ['BA-ER', 'BA-BA', 'ER-BA', 'ER-ER', 'moscow', 'cannes']
-    graph_matrix = ['ER1_10000', 'BA2_10000', 'BA1_10000', 'ER2_10000', 'moscow_3', 'cannes_3']
-    for graph in range(len(graph_list)):
-        for i in c:
-            edge_select(i, graph_matrix[graph], graph_list[graph])
+    graph_matrix1 = ['BA1_10000', 'BA1_10000', 'ER1_10000', 'ER1_10000', 'moscow_2', 'cannes_2']
+    graph_matrix2 = ['ER1_10000', 'BA2_10000', 'BA1_10000', 'ER2_10000', 'moscow_3', 'cannes_3']
+    # for graph in range(4, len(graph_list)):
+    #     print(graph_list[graph])
+    #     G1 = nx.read_edgelist("F:/论文/network data/" + graph_matrix1[graph])
+    #     G2 = nx.read_edgelist("F:/论文/network data/" + graph_matrix2[graph])
+    #     graph_name = "F:/论文/SHUJU/model data/" + graph_list[graph]
+    # calculate_TCI(graph_name, G1, G2)
+
+    # for graph in range(len(graph_list)):
+    #     for i in c:
+    #         edge_select(i, graph_matrix[graph], graph_list[graph])
