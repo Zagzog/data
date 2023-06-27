@@ -288,6 +288,88 @@ def experimental_scheme(layer1, layer2, name, ii):
     run_dynamics_modify(G1, G2, alpha1, frontier_number, central_number, ow, m, nnnn, con1, csn1, fsn1)
 
 
+# calculate the ratio of edge overlap
+def edge_overlap():
+    graph_name = ['BA-BA', 'BA-ER', 'ER-BA', 'ER-ER', 'moscow', 'cannes']
+    graph_list1 = ['BA1_10000', 'BA1_10000', 'ER1_10000', 'ER1_10000', 'moscow_2', 'cannes_2']
+    graph_list2 = ['BA2_10000', 'ER2_10000', 'BA2_10000', 'ER2_10000', 'moscow_3', 'cannes_3']
+
+    for i in range(6):
+        lap = 0
+        M1 = 0
+        M2 = 0
+        G1 = nx.read_edgelist("F:/论文/network data/" + graph_list1[i])
+        G2 = nx.read_edgelist("F:/论文/network data/" + graph_list2[i])
+        edge1_dict = {}
+        for edge in G1.edges():
+            edge1_dict[edge] = 0
+            M1 += 1
+        for edge in G2.edges():
+            M2 += 1
+            if edge in edge1_dict:
+                lap += 1
+
+        print(graph_name[i], lap / (M1 + M2 - lap))
+
+
+# calculate the spread range results of different h
+def change_h_data_clean(path):
+    number_A = []
+    for i in range(100):
+        store_A = []
+        f = open(path + "/number" + str(i) + "/population of knowing news.txt", 'r')
+        lines = f.readlines()
+        f.close()
+        for line in lines:
+            item = line.strip('\n')
+            store_A.append(int(item))
+        if not number_A:
+            number_A = store_A
+        else:
+            l1 = len(number_A)
+            l2 = len(store_A)
+            if l1 > l2:
+                for j in range(l2, l1):
+                    store_A.append(store_A[-1])
+            elif l1 < l2:
+                for j in range(l1, l2):
+                    number_A.append(number_A[-1])
+            l = max(l1, l2)
+            for j in range(l):
+                number_A[j] += store_A[j]
+    f = open(path + '/number_A.txt', 'w')
+    for i in range(len(number_A)):
+        f.write(str(number_A[i] / 100) + '\n')
+    f.close()
+
+
+# calculate the opinion results of different h
+def simulation_frequency(graph_name, ces):
+    opinion_1 = [0 for i in range(20)]
+    rr = []
+    for i1 in range(-10, 11, 1):
+        rr.append(i1 / 10)
+    path = 'F:/paper-data/model-data-add/' + str(graph_name) + '/' + str(ces) + '-central extreme supporter'
+    f = open(path + '/simulation data/average_opinion.txt', 'r')
+    lines1 = f.readlines()
+    f.close()
+    for item in lines1:
+        line1 = item.strip('\n').split(':')
+        for i2 in range(20):
+            if rr[i2] <= float(line1[1]) <= rr[i2 + 1]:
+                opinion_1[i2] += 1
+                break
+
+    folder = os.path.exists(path + '/analysis results/')
+    if not folder:
+        os.makedirs(path + '/analysis results/')
+
+    g = open(path + '/analysis results/simulation_frequency.txt', 'w')
+    for opinion in opinion_1:
+        g.write(str(opinion) + '\n')
+    g.close()
+
+
 if __name__ == '__main__':
     G1 = nx.read_edgelist('E:/paper-data/network data/BA1_10000')
     G2 = nx.read_edgelist('E:/paper-data/network data/ER1_10000')

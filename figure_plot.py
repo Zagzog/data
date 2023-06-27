@@ -164,8 +164,9 @@ def figure3_plot(graph_name, ces, lab1):
     plt.savefig('F:/desktop/figure3/' + lab1 + '.png')
 
 
-def figure4_plot(graph_name, lab1):
-    mpl.rcParams['font.sans-serif'] = ['SimHei']
+def figure4_plot(tci_name):
+    color_list = ['#5582A8', '#FEC863', '#5EC4AA', '#EF5555', '#FF7B9B', '#B161F7']
+    label_list = ['BA-BA', 'BA-ER', 'ER-BA', 'ER-ER', 'MOS', 'CAN']
     mpl.rcParams['axes.unicode_minus'] = False
     figure, ax = plt.subplots(figsize=(7, 5))
     font = {
@@ -176,40 +177,31 @@ def figure4_plot(graph_name, lab1):
         'weight': 'normal',
         'size': 40,
     }
-    r_k_dic = {
-        'BA-ER': [0.002],
-        'BA-BA': [-0.03],
-        'ER-BA': [-0.03],
-        'ER-ER': [0.011],
-        'moscow': [-0.22],
-        'cannes': [-0.1]
-    }
-    for item in r_k_dic.keys():
-        for i in range(10):
-            r_k_dic[item].append(r_k_dic[item][0])
-    r_o_dic = {
-        'BA-ER': [0.228, 0.232, 0.225, 0.213, 0.213, 0.213, 0.212, 0.215, 0.205, 0.216, 0.225],
-        'BA-BA': [0.174, 0.215, 0.225, 0.229, 0.222, 0.224, 0.229, 0.222, 0.220, 0.224, 0.154],
-        'ER-BA': [0.183, 0.218, 0.221, 0.221, 0.228, 0.223, 0.226, 0.225, 0.225, 0.202, 0.178],
-        'ER-ER': [0.225, 0.212, 0.204, 0.197, 0.205, 0.199, 0.211, 0.207, 0.229, 0.223, 0.224],
-        'moscow': [0.354, 0.691, 0.807, 0.897, 0.859, 0.868, 0.897, 0.802, 0.845, 0.694, 0.04],
-        'cannes': [0.226, 0.869, 0.807, 0.748, 0.877, 0.913, 0.889, 0.830, 0.828, 0.813, 0.348]
-    }
-    x = [j for j in range(11)]
-    x1 = [j / 2 for j in range(0, 21)]
-    y1 = [0 for j in range(0, 21)]
-    plt.plot(x, r_o_dic[graph_name], 'o-', markersize=10)
-    plt.plot(x, r_k_dic[graph_name], '>-', markersize=10, color='#F83719')
-    plt.plot(x1, y1, '_', color='black', linewidth=5)
+    graph_list = ['BA-BA', 'BA-ER', 'ER-BA', 'ER-ER', 'moscow', 'cannes']
 
-    plt.ylim(-0.3, 1)
-    # plt.ylabel(''r'$r_{\theta}$', font)
-    # plt.xlabel('x', font)
-    # plt.title(lab1, font2, x=-0.25)
-    plt.tick_params(labelsize=20)
-    plt.subplots_adjust(wspace=0, hspace=1, left=0.2, right=0.9, bottom=0.15, top=0.9)
+    style_list = ['o-', 'D-', 's-', 'v-', '^-', '*-']
+
+    for i in range(6):
+        path = "F:/论文/SHUJU/model data/" + graph_list[i] + "/" + tci_name
+        y = []
+        f = open(path, "r")
+        lines = f.readlines()
+        f.close()
+        for line in lines:
+            item = line.strip('\n')
+            y.append(float(item))
+
+        x = [j for j in range(11)]
+
+        plt.plot(x, y, style_list[i], markersize=8, color=color_list[i], label=label_list[i])
+
+        # plt.legend(frameon=False, fontsize=15)
+        # plt.ylim(-0.2, 1)
+        plt.tick_params(labelsize=20)
+        plt.subplots_adjust(wspace=0, hspace=1, left=0.2, right=0.9, bottom=0.15, top=0.9)
     # plt.show()
-    plt.savefig('F:/desktop/figure4/' + lab1 + '.png')
+    plt.xticks([0, 2, 4, 6, 8, 10])
+    plt.savefig('C:/Users/86178/Desktop/一审补充图/' + tci_name + ".png")
 
 
 def figure5_plot(graph_name, graph_martix, numb):
@@ -431,93 +423,94 @@ def figure6_plot():
     plt.show()
 
 
-# SI figure1
-def SI_figure1_pre():
-    z, z1, zz = [], [], {}
-    degree_dic = {}
-    for i in range(1, 21):
-        G1 = nx.read_edgelist('E:/paper-data/evolutionary process/graph' + str(i) + '/er1')
-        degree_list = nx.degree_histogram(G1)
-        b, c = degree_node(G1, 10, 10)
-        max = []
-        min = []
-        for bb in b:
-            m = G1.degree(bb)
-            min.append(m)
-        for cc in c:
-            n = G1.degree(cc)
-            max.append(n)
-        mm = sum(max) / len(max)
-        nn = sum(min) / len(min)
-        z.append(mm)
-        z1.append(nn)
-        degree_dic[i] = degree_list
-    k_1 = sum(z) / len(z)
-    k_2 = sum(z1) / len(z1)
-    for i in range(11):
-        zz1 = ((2*i - 10) / 10) * ((k_1 - k_2)/(k_2 + k_1))
-        zz[i] = zz1
-    return zz, k_1, k_2
-
-
-def SI_figure1_plot(N, lab, i):
-    mpl.rcParams['font.sans-serif'] = ['SimHei']
-    mpl.rcParams['axes.unicode_minus'] = False
-    # 获取参数
-    zz, k_1, k_2 = SI_figure1_pre()
-    m = (1 / N) * (k_1 + k_2)
-    mm = 1 - (1 - m) ** 10
-
-    # 画图设置
-    figure, ax = plt.subplots(figsize=(9, 7))
-
-    font2 = {
-        'weight': 'normal',
-        'size': 35,
-    }
-    font1 = {
-        'weight': 'normal',
-        'size': 50,
-    }
+# figure B.7
+def spread_range_plot(graph_name, parm):
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
     font = {
-        'weight': 'normal',
-        'size': 55,
+        'weight': 'bold',
+        'size': 60,
     }
-    font3 = {
-        'weight': 'normal',
-        'size': 75,
+    font2 = {
+        'weight': 'bold',
+        'size': 40,
     }
 
-    # 相图x,y范围的设置
-    x, y = meshgrid(arange(1, N + 1, 1), arange(-1, 1.1, 0.1))
-    # 微分方程
-    vy = (x / N) * (1 - (1 - x / N) ** 10) * ((1 - mm) * y + mm * zz[i]) - y
-    vx = x / 1.1 * 10 * (1 - x / N) * (0.1 / (1 + np.exp(-abs(y))))
-    # 画相流图函数
-    ax.streamplot(x, y, vx, vy)
+    figure, ax = plt.subplots(figsize=(10, 8))
+    plt.tick_params(labelsize=30)
+    h_list = [0.1, 1, 10, 100]
+    color_list = ['#676767', '#42B497', '#D74B0C', '#3176B8']
+    for i in range(4):
+        if i == 1 and graph_name != "cannes" and graph_name != "moscow":
+            path = "F:/论文/SHUJU/model data/" + graph_name + "/" + str(parm) + "-central extreme supporter/simulation data"
+        else:
+            path = "F:/paper-data/model-data-add/" + graph_name + "/h-" + str(h_list[i]) + "/" + str(parm) + \
+                   "-central extreme supporter/simulation data"
 
-    # 图例的一些设置
-    if lab == 'a' or lab == 'b':
-        plt.title(lab, font, x=-0.25)
-        plt.tick_params(labelsize=25)
-        plt.xlabel('y', font2)
-        plt.ylabel(r'$\bar\theta$', font2)
-    else:
-        plt.title(lab, font3, x=-0.25)
-        plt.tick_params(labelsize=30)
-        plt.xlabel('y', font1)
-        plt.ylabel(r'$\bar\theta$', font1)
-    new_ticks = np.linspace(0, N, 5)
-    plt.xticks(new_ticks)
-    plt.xlim(0, N)
+        f = open(path + "/number_A.txt", "r")
+        lines = f.readlines()
+        f.close()
 
-    plt.subplots_adjust(left=0.23, right=0.9, bottom=0.17)
-    # plt.savefig('F:/desktop/补充图/figure1/' + lab + '.png')
+        y = []
+        for line in lines:
+            item = line.strip("\n")
+            y.append(float(item))
+        x = [_ for _ in range(len(y))]
+        plt.plot(x, y, linewidth=3, color=color_list[i])
+    plt.subplots_adjust(wspace=0, hspace=1, left=0.13, right=0.95, bottom=0.1, top=0.9)
     plt.show()
 
 
-# SI figure4-10
-def SI_figure4_frame(graph_name, lab1, ces):
+# figure B.8
+def opinion_plot(graph_name, parm):
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    font = {
+        'weight': 'bold',
+        'size': 60,
+    }
+    font2 = {
+        'weight': 'bold',
+        'size': 40,
+    }
+
+    figure, ax = plt.subplots(figsize=(8, 7))
+
+    h_list = [0.1, 1, 10, 100]
+    color_list = ['#676767', '#42B497', '#D74B0C', '#3176B8']  # 黑，绿，红，蓝
+    for i in range(4):
+        ba_er_sim, x_sim, = figure2_pre_ver2(graph_name + '/', h_list[i], parm)
+        plt.plot(x_sim, ba_er_sim, 'o-', markersize=10, linewidth=4, color=color_list[i])
+        avg_result = []
+        for i in range(len(ba_er_sim)):
+            avg_result.append(ba_er_sim[i] * x_sim[i])
+        avg = sum(avg_result) / sum(ba_er_sim)
+        plt.axvspan(-1.05, avg, facecolor='#FEFAEB')
+        plt.axvspan(avg, 1.05, facecolor='#F2F7FC')
+        ax = plt.gca()
+        ax.set_yscale('symlog')
+
+    plt.xlim(-1.05, 1.05)
+    plt.tick_params(labelsize=30)
+    plt.xticks([-1, -0.5, 0, 0.5, 1])
+    x = [-1.05, 1.05]
+    y = [0.65, 0.65]
+    plt.plot(x, y, '--', linewidth=1, color='#5C5C5C')
+    if graph_name == 'moscow':
+        plt.ylim(1, 10000)
+        plt.yticks([0.5, 1, 10, 100, 1000, 10000])
+    elif graph_name == 'cannes':
+        plt.ylim(1, 40000)
+        plt.yticks([0.5, 1, 10, 100, 1000, 10000, 60000])
+    else:
+        plt.ylim(1, 12000)
+        plt.yticks([0.5, 1, 10, 100, 1000, 10000])
+
+    plt.show()
+
+
+#  figure B.10-15
+def SI_figure_frame(graph_name, lab1, ces):
     mpl.rcParams['font.sans-serif'] = ['SimHei']
     mpl.rcParams['axes.unicode_minus'] = False
     colors = ['#0000CC', '#0F0FB7', '#2424C2', '#3434C6', '#4747D5', '#5F66FD',
@@ -585,4 +578,5 @@ def SI_figure4_frame(graph_name, lab1, ces):
     plt.subplots_adjust(wspace=0, hspace=1, left=0.11, right=0.97, bottom=0.19, top=0.9)
     # plt.savefig('F:/desktop/' + str(graph_name) + '/' + lab1[0] + '.png')
     plt.show()
+
 
