@@ -1,4 +1,6 @@
 # Network data and program
+network_data.zip
+the data of our network
 
 main_program.py
 The simulation program of our model, where h=1
